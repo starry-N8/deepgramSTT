@@ -1,5 +1,4 @@
 fastapi
 uvicorn
 deepgram-sdk
-sounddevice
-numpy
+websockets
