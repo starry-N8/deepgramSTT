@@ -1,7 +1,7 @@
 import threading
 import time
 import queue
-import sounddevice
+import sounddevice as sd
 import numpy
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from deepgram import (
