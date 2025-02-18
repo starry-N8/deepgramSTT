@@ -1,7 +1,8 @@
 import threading
 import time
 import queue
-import pyaudio
+import sounddevice
+import numpy
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from deepgram import (
     DeepgramClient,
@@ -98,24 +99,18 @@ class AudioTranscriber:
             if not self.setup_deepgram():
                 return
             
-            p = pyaudio.PyAudio()
-            stream = p.open(
-                format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                input=True,
-                frames_per_buffer=CHUNK
-            )
-
-            start_time = time.time()
-            while time.time() - start_time < RECORD_SECONDS and not self.exit_flag:
-                data = stream.read(CHUNK, exception_on_overflow=False)
+            def callback(indata, frames, time, status):
+                if status:
+                    print(status)
                 if self.dg_connection:
-                    self.dg_connection.send(data)
+                    self.dg_connection.send(indata.tobytes())
 
-            stream.stop_stream()
-            stream.close()
-            p.terminate()
+            with sd.InputStream(samplerate=RATE, channels=CHANNELS, callback=callback):
+                import time
+                start_time = time.time()
+                while time.time() - start_time < RECORD_SECONDS and not self.exit_flag:
+                    time.sleep(0.1)
+
             if self.dg_connection:
                 self.dg_connection.finish()
             if self.message_queue:
