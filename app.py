@@ -89,7 +89,7 @@ class AudioTranscriber:
 app = FastAPI()
 
 # Hardcoded token for verification
-HARDCODED_TOKEN = os.environ.get('DEEPGRAM_API_KEY')
+HARDCODED_TOKEN = "a09s8d7fg4kjcvz0ba679m0n8svbnm"
 
 def verify_token(token: str) -> bool:
     """Simple verification against a hardcoded token."""
@@ -111,7 +111,7 @@ async def websocket_endpoint(
     # Create a queue to forward transcription messages to the client
     message_queue = queue.Queue()
     # Replace with your actual Deepgram API key or load from environment variables
-    DEEPGRAM_API_KEY = "7519c2bc0ada5ee88dfc7878b33c54ff64c2534a"
+    DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
 
     # Initialize and setup Deepgram transcription
     transcriber = AudioTranscriber(DEEPGRAM_API_KEY, message_queue)
