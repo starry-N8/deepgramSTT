@@ -148,3 +148,12 @@ async def websocket_endpoint(
     finally:
         transcriber.finish()
         transcription_task.cancel()
+
+@app.get("/health")
+async def health_check():
+    """
+    A simple health check endpoint.
+    Returns:
+        A JSON object with a status message.
+    """
+    return {"status": "healthy"}
