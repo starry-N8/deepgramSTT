@@ -149,7 +149,7 @@ async def websocket_endpoint(
         transcriber.finish()
         transcription_task.cancel()
 
-@app.get("/health")
+@app.get("/healthz")
 async def health_check():
     """
     A simple health check endpoint.
