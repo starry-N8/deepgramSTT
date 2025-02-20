@@ -5,7 +5,6 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
 from deepgram import DeepgramClient, LiveTranscriptionEvents, LiveOptions
 import os
 
-
 # Audio settings (must match client settings)
 CHANNELS = 1
 RATE = 16000
@@ -89,18 +88,31 @@ class AudioTranscriber:
 
 app = FastAPI()
 
+# Hardcoded token for verification
+HARDCODED_TOKEN = os.environ.get('DEEPGRAM_API_KEY')
+
+def verify_token(token: str) -> bool:
+    """Simple verification against a hardcoded token."""
+    return token == HARDCODED_TOKEN
+
 @app.websocket("/ws/transcribe")
 async def websocket_endpoint(
     websocket: WebSocket,
-    record_seconds: int = Query(30, description="Recording duration in seconds")
+    record_seconds: int = Query(30, description="Recording duration in seconds"),
+    token: str = Query(..., description="Authentication token")
 ):
+    # Verify the token before accepting the connection
+    if not verify_token(token):
+        # Close the connection with a policy violation close code (1008)
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
     # Create a queue to forward transcription messages to the client
     message_queue = queue.Queue()
     # Replace with your actual Deepgram API key or load from environment variables
-    DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
+    DEEPGRAM_API_KEY = "7519c2bc0ada5ee88dfc7878b33c54ff64c2534a"
 
-    
     # Initialize and setup Deepgram transcription
     transcriber = AudioTranscriber(DEEPGRAM_API_KEY, message_queue)
     if not transcriber.setup_deepgram():
