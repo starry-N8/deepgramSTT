@@ -41,7 +41,7 @@ class AudioTranscriber:
             print(close_msg)
 
     def setup_deepgram(self):
-        """Initialize Deepgram connection."""
+        """Initialize Deepgram connection with bias for animal sounds and low latency."""
         try:
             deepgram = DeepgramClient(self.api_key)
             self.dg_connection = deepgram.listen.websocket.v("1")
@@ -66,12 +66,15 @@ class AudioTranscriber:
                 interim_results=True,
                 encoding="linear16",
                 channels=CHANNELS,
-                sample_rate=RATE
+                sample_rate=RATE,
+                search=["baa", "meow", "quack"],         # Bias for these sounds
+                keywords=["baa", "meow", "quack"],         # Boost detection probability
+                replace={"bah": "baa", "meaw": "meow", "quak": "quack"}  # Correct misinterpretations
             )
 
             self.dg_connection.start(options)
             # Brief pause to ensure the connection is established
-            time.sleep(0.5)
+            time.sleep(0.2)
             return True
         except Exception as e:
             err_msg = f"Error setting up Deepgram: {e}"
@@ -103,14 +106,13 @@ async def websocket_endpoint(
 ):
     # Verify the token before accepting the connection
     if not verify_token(token):
-        # Close the connection with a policy violation close code (1008)
         await websocket.close(code=1008)
         return
 
     await websocket.accept()
     # Create a queue to forward transcription messages to the client
     message_queue = queue.Queue()
-    # Replace with your actual Deepgram API key or load from environment variables
+    # Replace with your actual Deepgram API key or load it from environment variables
     DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY')
 
     # Initialize and setup Deepgram transcription
@@ -135,9 +137,7 @@ async def websocket_endpoint(
     start_time = time.time()
     try:
         # Receive binary audio data from the client until record_seconds elapse
-        while True:
-            if time.time() - start_time >= record_seconds:
-                break
+        while time.time() - start_time < record_seconds:
             data = await websocket.receive_bytes()
             if data is None:
                 break
